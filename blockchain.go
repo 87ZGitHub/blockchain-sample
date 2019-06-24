@@ -1,7 +1,7 @@
-package core
+package main
 
 type BlockChain struct {
-	Blocks []*Block
+	blocks []*Block
 }
 
 func NewBlockChain() *BlockChain {
@@ -9,7 +9,7 @@ func NewBlockChain() *BlockChain {
 }
 
 func (bc *BlockChain) AddBlock(data string) {
-	prevBlock := bc.Blocks[len(bc.Blocks)-1]
+	prevBlock := bc.blocks[len(bc.blocks)-1]
 	newBlock := NewBlock(data, prevBlock.Hash)
-	bc.Blocks = append(bc.Blocks, newBlock)
+	bc.blocks = append(bc.blocks, newBlock)
 }
