@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"log"
 	"time"
@@ -11,8 +12,8 @@ type Block struct {
 	Timestamp     int64
 	PrevBlockHash []byte
 	Hash          []byte
-	Data          []byte
-	Nonce         int //Nonce 在对工作量证明进行验证时用到
+	Transactions  []*Transaction //交易
+	Nonce         int            //Nonce 在对工作量证明进行验证时用到
 }
 
 // Serialize 将Block序列化一个字节数组
@@ -28,7 +29,7 @@ func (b *Block) Serialize() []byte {
 	return result.Bytes()
 }
 
-// 将字节数组反序列化为一个Block
+// DeserializeBlock 将字节数组反序列化为一个Block
 func DeserializeBlock(d []byte) *Block {
 	var block Block
 
@@ -41,12 +42,13 @@ func DeserializeBlock(d []byte) *Block {
 
 }
 
-func NewBlock(data string, prevBlockHash []byte) *Block {
+// NewBlock creates and returns Block
+func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
 	block := &Block{
 		Timestamp:     time.Now().Unix(),
 		PrevBlockHash: prevBlockHash,
 		Hash:          []byte{},
-		Data:          []byte(data),
+		Transactions:  transactions,
 		Nonce:         0,
 	}
 	pow := NewProofOfWork(block)
@@ -58,6 +60,20 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 	return block
 }
 
-func NewGenesisBlock() *Block {
-	return NewBlock("Genesis Block", []byte{})
+// NewGenesisBlock creates and retruns  Genesis Block
+func NewGenesisBlock(coinbase *Transaction) *Block {
+	return NewBlock([]*Transaction{coinbase}, []byte{})
+}
+
+// HashTransactions 计算区块里所有交易的哈希
+func (b *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+	var txHash [32]byte
+
+	for _, tx := range b.Transactions {
+		txHashes = append(txHashes, tx.ID)
+	}
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+
+	return txHash[:]
 }
